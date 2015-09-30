@@ -64,9 +64,6 @@ def make_prediction():
     gp = george.GP(k)
     gp.compute(D, yerr)
 
-#     xx = np.linspace(min(x), max(x), 1000)  # test points
-#     xz = np.linspace(min(z), max(z), 1000)
-#     xs = np.vstack((xx, xz)).T
     xs = np.zeros((1, 2))
     print xs
     xs[0, 0] = 4.5
@@ -77,18 +74,6 @@ def make_prediction():
     mu, cov = gp.predict(y, xs)  # do the prediction
     v = np.diag(cov)**.5
     print mu
-
-    # plot data
-    plt.clf()
-    plt.subplot(2, 1, 1)
-    plt.errorbar(z, y, xerr=zerr, yerr=yerr, fmt="k.")
-#     plt.plot(xz, mu)
-#     plt.fill_between(xz, mu - v, mu + v, alpha=.2)
-    plt.subplot(2, 1, 2)
-    plt.errorbar(x, y, xerr=xerr, yerr=yerr, fmt="k.")
-#     plt.plot(xx, mu)
-#     plt.fill_between(xx, mu - v, mu + v, alpha=.2)
-    plt.savefig("test")
 
 if __name__ == "__main__":
 
