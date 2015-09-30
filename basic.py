@@ -45,8 +45,7 @@ def format_data():
             np.array(terr), np.array(l), np.array(lerr), np.array(f), \
             np.array(ferr), np.array(ag), np.array(agerr)
 
-
-def make_prediction():
+def make_prediction(period, teff):
     """
     Given the training set and a new rotation period, predict an age
     """
@@ -55,9 +54,9 @@ def make_prediction():
             np.genfromtxt("data.txt").T
 
     # set your x, y z and hyperparameters
-    x, y, z, xerr, yerr, zerr = a, p, t, aerr, perr, terr
+    x, y, z, xerr, yerr, zerr = p, a, t, perr, aerr, terr
     D = np.vstack((x, z)).T
-    A, lx, lz = 10, 3, 600
+    A, lx, lz = 10, 50, 600
 
     # GP prediction
     k = A**2 * ExpSquaredKernel([lx**2, lz**2], ndim=2)
@@ -65,16 +64,42 @@ def make_prediction():
     gp.compute(D, yerr)
 
     xs = np.zeros((1, 2))
-    print xs
-    xs[0, 0] = 4.5
-    xs[0, 1] = 5700
-    print xs
+    xs[0, 0] = period
+    xs[0, 1] = teff
 
-    print np.shape(xs)
     mu, cov = gp.predict(y, xs)  # do the prediction
     v = np.diag(cov)**.5
-    print mu
+    return mu[0], v[0]
+
+def make_prediction_1D():
+    """
+    Given the training set and a new rotation period, predict an age
+    """
+    # load data
+    KID, p, perr, t, terr, l, lerr, f, ferr, a, aerr = \
+            np.genfromtxt("data.txt").T
+
+    # set your x, y and hyperparameters
+    x, y, xerr, yerr = l, a, lerr, aerr
+    A, l = 10, .8
+
+    # GP prediction
+    k = A**2 * ExpSquaredKernel(l**2)
+    gp = george.GP(k)
+    gp.compute(x, yerr)
+
+    xs = np.linspace(min(x), max(x), 1000)
+
+    mu, cov = gp.predict(y, xs)  # do the prediction
+    v = np.diag(cov)**.5
+
+    plt.clf()
+    plt.errorbar(x, y, xerr=xerr, yerr=yerr, fmt="k.")
+    plt.plot(xs, mu)
+    plt.savefig("test")
 
 if __name__ == "__main__":
 
-    make_prediction()
+    make_prediction_1D()
+#     p, perr = make_prediction(26, 5700)
+#     print p, perr
