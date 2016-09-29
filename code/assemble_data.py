@@ -16,7 +16,7 @@ def match(ids1, ids2):
         if len(ids2[m]):
             matched_ids.append(id)
             inds1.append(i)
-            inds2.append(np.where(m)[0])
+            inds2.append(np.where(m)[0][0])
     return matched_ids, inds1, inds2
 
 
@@ -29,24 +29,24 @@ def K2_cluster(name, ids, periods, age, age_err, feh, feh_err):
 
     epic = get_catalog("k2targets")
     matched_ids, inds1, inds2 = match(ids, epic.epic_number)
-    assert 0
+    print(epic.keys())
 
-    d = {"id": matched_ids,
-         "period": periods[inds1],
-         "teff": epic.k2_teff[inds2],
-         "teff_err": epic.k2_teff_err[inds2],
+    d = {"epic_id": matched_ids,
          "age": np.ones_like(matched_ids)*age,
          "age_err": np.ones_like(matched_ids)*age_err,
          "feh": np.ones_like(matched_ids)*feh,
-         "feh_err": np.ones_like(matched_ids)*feh_err}
+         "feh_err": np.ones_like(matched_ids)*feh_err,
+         "logg": epic.k2_logg[inds2],
+         "logg_err": .5 * (epic.k2_loggerr1[inds2] + epic.k2_loggerr2[inds2]),
+         "period": periods[inds1],
+         "teff": epic.k2_teff[inds2],
+         "teff_err": .5 * (epic.k2_tefferr1[inds2] + epic.k2_tefferr2[inds2])}
 
     df = pd.DataFrame(d)
-    print(df)
-
-    return
-
+    df.to_csv(os.path.join(PATH, "{}.csv".format(name)))
 
 if __name__ == "__main__":
+    # hyades rotation periods from Douglas et al. (2016)
     hyades_ids, hyades_prots = \
         np.genfromtxt(os.path.join(PATH, "J_ApJ_822_47/table4.txt")).T
 
