@@ -16,8 +16,8 @@ plotpar = {'axes.labelsize': 20,
 plt.rcParams.update(plotpar)
 
 
-def make_plot(sampler, x, y, yerr, fig_labels, DIR, traces=False, tri=False,
-              prediction=True):
+def make_plot(sampler, x, y, yerr, fig_labels, name, DIR, traces=False,
+              tri=False, prediction=True):
 
     nwalkers, nsteps, ndims = np.shape(sampler)
     flat = np.reshape(sampler, (nwalkers * nsteps, ndims))
@@ -26,7 +26,7 @@ def make_plot(sampler, x, y, yerr, fig_labels, DIR, traces=False, tri=False,
     mcmc_result = np.array([i[0] for i in mcmc_result])
     print("\n", np.exp(np.array(mcmc_result[-1])), "period (days)", "\n")
     print(mcmc_result)
-    np.savetxt(os.path.join(DIR, "result.txt"), mcmc_result)
+    np.savetxt(os.path.join(DIR, "{0}_result.txt".format(name)), mcmc_result)
 
     if traces:
         print("Plotting traces")
@@ -34,13 +34,14 @@ def make_plot(sampler, x, y, yerr, fig_labels, DIR, traces=False, tri=False,
             plt.clf()
             plt.plot(sampler[:, :, i].T, 'k-', alpha=0.3)
             plt.ylabel(fig_labels[i])
-            plt.savefig(os.path.join(DIR, "{0}".format(fig_labels[i])))
+            plt.savefig(os.path.join(DIR, "{0}_{1}".format(name,
+                                                           fig_labels[i])))
 
     if tri:
         print("Making triangle plot")
         flat[:, -1] = np.exp(flat[:, -1])
         fig = corner.corner(flat, labels=fig_labels)
-        fig.savefig(os.path.join(DIR, "triangle"))
+        fig.savefig(os.path.join(DIR, "{0}_triangle".format(name)))
 
     if prediction:
         print("plotting prediction")
@@ -58,4 +59,4 @@ def make_plot(sampler, x, y, yerr, fig_labels, DIR, traces=False, tri=False,
         plt.plot(xs, mu, color=lightblue)
         plt.fill_between(xs, mu-v, mu+v, color=lightblue, alpha=.2)
         plt.xlim(min(x-x[0]), max(x-x[0]))
-        plt.savefig(os.path.join(DIR, "prediction"))
+        plt.savefig(os.path.join(DIR, "{0}_prediction".format(name)))
