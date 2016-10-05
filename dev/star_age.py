@@ -2,15 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import matplotlib.pyplot as plt
-from isochrones.dartmouth import Dartmouth_Isochrone
-from isochrones import StarModel
+# import matplotlib.pyplot as plt
+# from isochrones.dartmouth import Dartmouth_Isochrone
+# from isochrones import StarModel
 import pandas as pd
 import os
 import kplr
 import glob
 from fgkcupid import teff2bv
-from kepler_data import load_data
+from kepler_data import load_kepler_data
+import acf
 
 DATA_DIR = "data"
 LC_DIR = "/Users/ruthangus/.kplr/data/lightcurves"
@@ -111,14 +112,17 @@ class star(object):
         if not prot:
             fnames = glob.glob(os.path.join(LC_DIR, "{}/*fits".format(id)))
             if not len(fnames):
+                print("Downloading light curve...")
                 client = kplr.API()
                 star = client.star(id)
                 star.get_light_curves(fetch=True, shortcadence=False)
             fnames = glob.glob(os.path.join(LC_DIR, "{}/*fits".format(id)))
+            x, y, yerr = load_kepler_data(fnames)
 
-        # calculate ACF
-
-
+            # calculate ACF
+            prot = acf.corr_run(x, y, yerr, id, savedir="results",
+                                saveplot=True)
+        print(prot)
 
 
 def match(id1, id2):
