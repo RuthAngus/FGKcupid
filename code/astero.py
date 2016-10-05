@@ -6,32 +6,32 @@ class astero(object):
 
         # Load SDSS Astero data from table 1 - KIDs, nu_max, nu_max_err,
         # dnu, dnu_err, SDSS teffs and feh
-        sdata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                              skiprows=30, skip_footer=1313, invalid_raise=False,
+        sdata = np.genfromtxt('ApJtable_zeros.txt',
+                              skip_header=30, skip_footer=1343, missing_values=0,
                               usecols=(0,1,2,3,4,5,6,9,10)).T
         sKID1, snu_max1, snu_max_err1, sdnu1, sdnu_err1, steff1, steff_err1, sfeh1, \
                 sfeh_err1 = sdata
 
         # Load IRFM Astero data from table 1 - KIDs, nu_max, nu_max_err,
         # dnu, dnu_err, IRFM teffs and feh
-        idata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                              skiprows=30, skip_footer=1313, invalid_raise=False,
+        idata = np.genfromtxt('ApJtable_zeros.txt',
+                              skip_header=30, skip_footer=1343, missing_values=0,
                               usecols=(0,1,2,3,4,7,8,9,10)).T
         iKID1, inu_max1, inu_max_err1, idnu1, idnu_err1, iteff1, iteff_err1, ifeh1, \
                 ifeh_err1 = sdata
 
         # Load Astero data from table 2 - KIDs, nu_max, nu_max_err,
         # dnu, dnu_err, teffs and feh from bruntt
-        bdata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                               skiprows=576, skip_footer=1228, invalid_raise=False,
+        bdata = np.genfromtxt('ApJtable_zeros.txt',
+                               skip_header=576, skip_footer=1228, missing_values=0,
                                usecols=(0,1,2,3,4,5,6,7,8)).T
         bKID1, bnu_max1, bnu_max_err1, bdnu1, bdnu_err1, bteff1, bteff_err1, bfeh1, \
                 bfeh_err1 = bdata
 
         # load astero data from table 4 - KID, m, m_errp, m_errm,
         # r, r_errp, r_errm, rho, rho_errp, rho_errm logg, age with SDSS teffs
-        sdata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                              skiprows=698, skip_footer=675, invalid_raise=False,
+        sdata = np.genfromtxt('ApJtable_zeros.txt',
+                              skip_header=698, skip_footer=675, missing_values=0,
                               usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)).T
         sKID2, sm, sm_errp, sm_errm, sr, sr_errp, sr_errm, srho, srho_errp, \
                 srho_errm, slogg, slogg_errp, slogg_errm, sage, sage_errp, \
@@ -39,8 +39,8 @@ class astero(object):
 
         # load astero data from table 5 - KID, m, m_errpm m_errm,
         # r, r_errp, r_errm, rho, rho_errp, rho_errm logg, age with IRFM teffs
-        idata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                              skiprows=1251, skip_footer=122, invalid_raise=False,
+        idata = np.genfromtxt('ApJtable_zeros.txt',
+                              skip_header=1251, skip_footer=122, missing_values=0,
                               usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)).T
         iKID2, im, im_errp, im_errm, ir, ir_errp, ir_errm, irho, irho_errp, \
                 irho_errm, ilogg, ilogg_errp, ilogg_errm, iage, iage_errp, \
@@ -48,8 +48,8 @@ class astero(object):
 
         # load astero data from table 6 - KID, m, m_errp, m_errm,
         # r, r_errp, r_errm, rho, rho_errp, rho_errm logg, age with Bruntt teffs
-        bdata = np.genfromtxt('/Users/angusr/Python/Gyro/data/ApJtable_zeros.txt',
-                              skiprows=1804, invalid_raise=False,
+        bdata = np.genfromtxt('ApJtable_zeros.txt',
+                              skip_header=1804, missing_values=0,
                               usecols=(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)).T
         bKID2, bm, bm_errp, bm_errm, br, br_errp, br_errm, brho, brho_errp, \
                 brho_errm, blogg, blogg_errp, blogg_errm, bage, bage_errp, \
