@@ -8,6 +8,7 @@ from isochrones import StarModel
 import pandas as pd
 import os
 import kplr
+import fgkcupid as fc
 
 DATA_DIR = "data"
 LC_DIR = "/Users/ruthangus/.kplr/data/lightcurves"
@@ -38,7 +39,7 @@ class star(object):
         BV: tuple (B-V, B-V_err) (optional)
             The B-V colour.
         Vmag: tuple (Vmag, Vmag_err) (optional)
-            The V-band magnitude.
+            The V-band magnitude. This is currently just a placeholder.
         Gmag: tuple (Gmag, Gmag_err) (optional)
             The Gaia magnitude.
         kepmag: tuple (kepmag, kepmag_err) (optional)
@@ -54,7 +55,7 @@ class star(object):
         assert len(id) < 10, "ID must be a 9-digit KIC id."
         id = str(int(id)).zfill(9)  # make sure id is in KIC format.
 
-        # initialise kplr if any KIC values are missing.
+        # KIC parameters.
         if not teff or logg or feh or kepmag:
             client = kplr.API()
             star = client.star(id)
@@ -66,7 +67,34 @@ class star(object):
                 feh = (star.kic_feh, .1)
             if not kepmag:
                 kepmag = (star.kic_kepmag, .1)
-        print(teff, logg, kepmag)
+        if not BV:
+            BV = (fc.teff2bv(teff, logg, feh), .01)
+
+        # Gaia parameters.
+        if not parallax:
+            Gdata = pd.read_csv(os.path.join(DATA_DIR,
+                                             "ruth_matched.csv"))
+            m = Gdata["kepid"] == id
+            parallax = (Gdata["parallax"][m], Gdata["parallax_error"][m])
+
+        def match(id1, id2):
+            """
+            Find the common ids between two lists of ids.
+            id1: array
+                Small id list.
+            id2: array
+                Large id list.
+            Returns matched ids and indices of matched arrays.
+            """
+            matched = []
+            inds1, inds2 = [], []
+            for i, id in enumerate(id1):
+                m = id2 == id
+                if len(id2[m]):
+                    matched.append(id)
+                    inds2.append(int(np.where(m)[0]))
+                    inds1.append(i)
+            return matched, inds1, inds2
 
 
 if __name__ == "__main__":
