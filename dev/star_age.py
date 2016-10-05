@@ -171,26 +171,6 @@ class star(object):
         return age, age_errp, age_errm, age_samples
 
 
-def match(id1, id2):
-    """
-    Find the common ids between two lists of ids.
-    id1: array
-        Small id list.
-    id2: array
-        Large id list.
-    Returns matched ids and indices of matched arrays.
-    """
-    matched = []
-    inds1, inds2 = [], []
-    for i, id in enumerate(id1):
-        m = id2 == id
-        if len(id2[m]):
-            matched.append(id)
-            inds2.append(int(np.where(m)[0]))
-            inds1.append(i)
-    return matched, inds1, inds2
-
-
 if __name__ == "__main__":
     st = star("002450729")
     st.isochronal_age()
