@@ -1,1 +1,4 @@
 include README.rst
+include data/*txt
+include data/*csv
+include data/*h5
