@@ -10,7 +10,30 @@ import pandas as pd
 import h5py
 import os
 
+orange = '#FF9933'
+lightblue = '#66CCCC'
+blue = '#0066CC'
+pink = '#FF33CC'
+turquoise = '#3399FF'
+lightgreen = '#99CC99'
+green = '#009933'
+maroon = '#CC0066'
+purple = '#9933FF'
+red = '#CC0000'
+lilac = '#CC99FF'
+
+__all__ = ["teff2bv", "bn_age", "load_data", "plot_2d_prediction",
+           "age_model"]
+
 DATA_DIR = "data"
+
+plotpar = {'axes.labelsize': 20,
+           'font.size': 20,
+           'legend.fontsize': 20,
+           'xtick.labelsize': 15,
+           'ytick.labelsize': 15,
+           'text.usetex': True}
+plt.rcParams.update(plotpar)
 
 
 def teff2bv(teff, logg, feh):
@@ -71,25 +94,32 @@ def load_data():
         logg[m], feh[m]
 
 
-def plot_2d_prediction(id, theta, x, y, xerr, yerr, myx, myz, mu, v, xaxis):
+def plot_2d_prediction(id, theta, x, y, z, xerr, yerr, myx, myz, mu, v, xaxis,
+                       RESULTS_DIR):
 
+    plt.clf()
     if xaxis == "period":
         bv, period = myz, x
-        xplot = np.linspace(min(x), max(x), 100)
+        xplot = np.linspace(0, max(x), 100)
         model_xplot_shape = bn_age(xplot, bv)
         l = theta[2]
-        xlabel, zlabel = "period", "B-V"
+        xvar, zvar, xlabel, zlabel = "period", "B-V", \
+            "$\mathrm{Period~(Days)}$", "$B-V$"
+        m = (myz - .03 < z) * (z < myz + .03)
+        plt.xlim(0, max(x[m]) + 5)
     else:
         bv, period = x, myz
         xplot = np.linspace(min(x), max(x), 100)
         model_xplot_shape = bn_age(period, xplot)
         l = theta[1]
-        xlabel, zlabel = "B-V", "period"
-    ylabel = "age"
+        xvar, zvar, xlabel, zlabel = "B-V", "period", "$B-V$", \
+            "$\mathrm{Period~(Days)}$"
+        m = (myz - (myz * .1 - 10) < z) * (z < (myz * .1 + 10) + myz)
+    yvar, ylabel = "age", "$\mathrm{Age~(Gyr)}$"
 
-    plt.clf()
-    plt.errorbar(x, y, xerr=xerr, yerr=yerr, fmt="k.")
-    plt.errorbar(myx, mu, yerr=v, fmt="r.", ms=10)
+    plt.errorbar(x[m], y[m], xerr=xerr[m], yerr=yerr[m], fmt="k.", capsize=0,
+                 ecolor=".7")
+    plt.errorbar(myx, mu, yerr=v, fmt=".", color=pink, ms=10)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     k = theta[0]**2 * ExpSquaredKernel(l**2)
@@ -99,16 +129,17 @@ def plot_2d_prediction(id, theta, x, y, xerr, yerr, myx, myz, mu, v, xaxis):
     gp.compute(x, (yerr**2 + theta[3]**2)**.5)
     mus, covs = gp.predict(y - model_y_shape, xplot)  # do the prediction
     vs = np.diag(covs)**.5
-    plt.plot(xplot, mus + model_xplot_shape,
-             label=("{0} = {1}".format(zlabel, myz)))
+    plt.plot(xplot, mus + model_xplot_shape, color=blue,
+             label=("{0} = {1:.2}".format(zlabel, myz)))
     plt.fill_between(xplot, mus + model_xplot_shape - vs - theta[3],
-                     mus + model_xplot_shape + vs + theta[3], alpha=.2)
+                     mus + model_xplot_shape + vs + theta[3], alpha=.2,
+                     color=blue)
     plt.legend(loc="best")
-    plt.savefig(os.path.join(RESULTS_DIR, "{0}_{1}_vs_{2}".format(id, xlabel,
-                                                                  ylabel)))
+    plt.savefig(os.path.join(RESULTS_DIR, "{0}_{1}_vs_{2}".format(id, xvar,
+                                                                  yvar)))
 
 
-def age_model(id, mybv, myperiod, plot=False):
+def age_model(id, mybv, myperiod, RESULTS_DIR, plot=False,):
     """
     Given a rotation period and a colour, calculate the age.
     PARAMETERS:
@@ -116,6 +147,8 @@ def age_model(id, mybv, myperiod, plot=False):
         The B-V colour.
     myperiod: float
         The rotation period in days.
+    RESULTS_DIR: str
+        The path for saving result plot.
     plot: bool
         Makes plot of 2-D projections if true.
     RETURNS:
@@ -147,14 +180,16 @@ def age_model(id, mybv, myperiod, plot=False):
     mu += bn_age(myperiod, mybv)
 
     if plot:
-
+        print("Generating FGKcupid plots...")
         m = (mybv - .1 < bv) * (bv < mybv + .1)
-        plot_2d_prediction(id, theta, period[m], age[m], period_err[m],
-                           age_err[m], myperiod, mybv, mu, v, "period")
+        plot_2d_prediction(id, theta, period[m], age[m], bv[m], period_err[m],
+                           age_err[m], myperiod, mybv, mu, v, "period",
+                           RESULTS_DIR)
 
         m = (myperiod - 10 < period) * (period < myperiod + 10)
-        plot_2d_prediction(id, theta, bv[m], age[m], bv_err[m], age_err[m], mybv,
-                           myperiod, mu, v, "bv")
+        plot_2d_prediction(id, theta, bv[m], age[m], period[m], bv_err[m],
+                           age_err[m], mybv, myperiod, mu, v, "bv",
+                           RESULTS_DIR)
 
     print("Age = {0} +/- {1} Gyr".format(mu[0], v[0]+theta[3]))
     return mu[0], v[0] + theta[3]

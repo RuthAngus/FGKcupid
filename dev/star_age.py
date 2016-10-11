@@ -22,7 +22,7 @@ class star(object):
     def __init__(self, id, mass=None, teff=None, logg=None, feh=None,
                  prot=None, BV=None, Vmag=None, Gmag=None, kepmag=None,
                  parallax=None, gyro_age=None, DATA_DIR=DATA_DIR,
-                 LC_DIR=LC_DIR, download_lc=True):
+                 RESULTS_DIR=RESULTS_DIR, LC_DIR=LC_DIR, download_lc=True):
         """
         Routines for calculating the age of a single star. Currently only
         suitable for Kepler targets.
@@ -54,6 +54,8 @@ class star(object):
             The gyro age.
         DATA_DIR: str
             The directory containing training data for the age model.
+        RESULTS_DIR: str
+            The directory for saving results.
         LC_DIR: str
             The directory containing the kepler light curves.
         download_lc: bool
@@ -218,7 +220,8 @@ class star(object):
                 if os.path.exists(fname):
                     self.gyro_age = tuple(np.genfromtxt(fname))
                 else:
-                    self.gyro_age = age_model(self.BV[0], self.prot[0],
+                    self.gyro_age = age_model(self.id, self.BV[0],
+                                              self.prot[0], RESULTS_DIR,
                                               plot=True)
                     np.savetxt(fname, self.gyro_age)
                 print("Gyro age = {0:.2} +/- {1:.2} \
@@ -268,5 +271,4 @@ class star(object):
 if __name__ == "__main__":
     # st = star("6196457")
     # st = star("002450729")
-    # st.isochronal_age()
     st = star("10023062")
