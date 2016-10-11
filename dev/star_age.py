@@ -67,29 +67,53 @@ class star(object):
         self.kepmag, self.parallax, self.gyro_age = kepmag, parallax, gyro_age
 
         # KIC parameters.
-        if not teff or logg or feh or kepmag:
-            client = kplr.API()
-            kic_star = client.star(self.id)
-            if not self.teff:
-                self.teff = (kic_star.kic_teff, 50)
-            if not self.logg:
-                self.logg = (kic_star.kic_logg, .1)
-            if not self.feh:
-                self.feh = (kic_star.kic_feh, .1)
-            if not self.kepmag:
-                self.kepmag = (kic_star.kic_kepmag, .1)
+        if not self.teff or not self.logg or not self.feh or not self.kepmag:
+            print("Searching database for stellar parameters...")
+            data = pd.read_csv(os.path.join(DATA_DIR, "ruth_matched.csv"))
+            m = np.array(data["kepid"]) == int(self.id)
+            if len(np.array(data["kepid"][m])):  # load from kepler-TGAS cat
+                id = np.array(data["kepid"])[m]
+                if not self.teff:
+                    self.teff = (float(np.array(data["teff"])[m]),
+                                 float(.5*(np.array(data["teff_err1"])[m]) +
+                                       np.abs(float(np.array
+                                                    (data["teff_err2"])[m]))))
+                if not self.feh:
+                    self.feh = (float(np.array(data["feh"])[m]),
+                                float(.5*(np.array(data["feh_err1"])[m]) +
+                                      np.abs(float(np.array
+                                                   (data["feh_err2"])[m]))))
+                if not self.logg:
+                    self.logg = (float(np.array(data["logg"])[m]),
+                                 float(.5*(np.array(data["logg_err1"])[m]) +
+                                       np.abs(float(np.array
+                                                    (data["logg_err2"])[m]))))
+                if not self.kepmag:
+                    self.kepmag = (float(np.array(data["kepmag"])[m]), .1)
+            else:  # load values from the KIC using kplr
+                print("Using kplr to download stellar parameters...")
+                client = kplr.API()
+                kic_star = client.star(self.id)
+                if not self.teff:
+                    self.teff = (kic_star.kic_teff, 50)
+                if not self.logg:
+                    self.logg = (kic_star.kic_logg, .1)
+                if not self.feh:
+                    self.feh = (kic_star.kic_feh, .1)
+                if not self.kepmag:
+                    self.kepmag = (kic_star.kic_kepmag, .1)
 
         # If the KIC values are empty, search in the astero database.
         if not self.teff[0] or not self.logg[0] or not self.feh[0]:
+            print("Searching Chaplin catalogue for stellar parameters...")
             d = pd.read_csv(os.path.join(DATA_DIR, "vansaders.txt"))
-            m = np.array(d["KIC"]) == str(int(self.id))
+            m = np.array(d["KIC"]) == int(self.id)
             if len(np.array(d["KIC"])[m]):
                 print("Loading value from van Saders et al. (2016)")
                 self.teff = (float(np.array(d["Teff"])[m]),
                              float(np.array(d["Teff_err"])[m]))
                 self.logg = (float(np.array(d["AMP_logg"])[m]), .1)
                 self.feh = (float(np.array(d["FeH"])[m]), .01)
-                print(self.teff, self.logg, self.feh)
             else:
                 import astero
                 ast = astero.astero()
@@ -108,6 +132,7 @@ class star(object):
 
         # Load Gaia parameters.
         if not self.parallax:
+            print("Searching TGAS catalogue for parallax...")
             Gdata = pd.read_csv(os.path.join(DATA_DIR,
                                              "ruth_matched.csv"))
             m = np.array(Gdata["kepid"]) == int(self.id)
@@ -116,17 +141,21 @@ class star(object):
                                  float(np.array(Gdata["parallax_error"])[m]))
                 print("Gaia parallax found")
             except:
-                print("Object not found in the TGAS catalogue.")
+                print("Object not found in the TGAS catalogue. \
+                      No Gaia parallax.")
 
         # load rotation period.
         if not self.prot:
+            print("Searching database for rotation period...")
             # Search van saders catalogue.
             d = pd.read_csv(os.path.join(DATA_DIR, "vansaders.txt"))
-            m = np.array(d["KIC"]) == str(int(self.id))
-            if len(np.array(d["KIC"][m])):
+            m = np.array(d["KIC"]) == int(self.id)
+            if len(np.array(d["KIC"])[m]):
                 self.prot = (float(np.array(d["period"])[m]),
                              float(np.array(d["period_err"])[m]))
-                print("Rotation period from van Saders (2016)")
+                print("Rotation period from van Saders (2016): \
+                      {0:.2} +/- {1:.2} Days".format(self.prot[0],
+                                                     self.prot[1]))
             else:
                 # Search McQuillan catalogue.
                 Rdata = pd.read_csv(os.path.join(DATA_DIR,
@@ -135,7 +164,9 @@ class star(object):
                 if len(Rdata["KID"][m]):
                     self.prot = (float(np.array(Rdata["Prot"])[m]),
                                  float(np.array(Rdata["Prot_err"])[m]))
-                    print("Rotation period from McQuillan et al. (2013)")
+                    print("Rotation period from McQuillan et al. (2013): \
+                          {0:.2} +/- {1:.2} Days".format(self.prot[0],
+                                                         self.prot[1]))
                 else:
                     # Search Garcia catalogue.
                     Rdata = pd.read_csv(os.path.join(DATA_DIR,
@@ -144,7 +175,9 @@ class star(object):
                     if len(Rdata["kid"][m]):
                         self.prot = (float(np.array(Rdata["period"])[m]),
                                      float(np.array(Rdata["period_err"])[m]))
-                        print("Rotation period from Garcia et al. (2014)")
+                        print("Rotation period from Garcia et al. (2014): \
+                              {0:.2} +/- {1:.2} Days".format(self.prot[0],
+                                                             self.prot[1]))
                     else:
                         print("No period found")
 
@@ -152,6 +185,7 @@ class star(object):
         # calculate acf.
         # load or download light curve.
         if not self.prot:
+            print("Manual period measurement in progress...")
             result_file = os.path.join(RESULTS_DIR,
                                        "{}_result.txt".format(self.id))
             if os.path.exists(result_file):
@@ -170,23 +204,29 @@ class star(object):
                                                "{}/*fits".format(self.id)))
                     x, y, yerr = load_kepler_data(fnames)
 
-                    # calculate ACF
+                    print("Calculating ACF...")
                     self.prot = acf.corr_run(x, y, yerr, self.id,
                                              savedir="results",
                                              saveplot=True)
 
-        if self.prot:
-            # Calculate a gyrochronology age using fgkcupid.
-            fname = os.path.join(RESULTS_DIR,
-                                 "{}_gyro_age.txt".format(self.id))
-            if os.path.exists(fname):
-                self.gyro_age = tuple(np.genfromtxt(fname))
-            else:
+        if .4 < self.BV[0] < 1.2:  # gyro_age = None if outside colour range.
+            if self.prot:
                 print("Calculating rotation-age")
-                self.gyro_age = age_model(self.BV[0], self.prot[0], plot=True)
-                np.savetxt(fname, self.gyro_age)
-            print("Gyro age = {0:.2} +/- {1:.2} Gyr".format(self.gyro_age[0],
-                                                            self.gyro_age[1]))
+                # Calculate a gyrochronology age using fgkcupid.
+                fname = os.path.join(RESULTS_DIR,
+                                     "{}_gyro_age.txt".format(self.id))
+                if os.path.exists(fname):
+                    self.gyro_age = tuple(np.genfromtxt(fname))
+                else:
+                    self.gyro_age = age_model(self.BV[0], self.prot[0],
+                                              plot=True)
+                    np.savetxt(fname, self.gyro_age)
+                print("Gyro age = {0:.2} +/- {1:.2} \
+                      Gyr".format(self.gyro_age[0], self.gyro_age[1]))
+            else:
+                print("No period found: no rotation-age calculated.")
+        else:
+            print("Star out of Gyro colour range")
 
     def isochronal_age(self, gyro_prior=False, use_Gaia_parallax=True):
         """
@@ -215,8 +255,8 @@ class star(object):
                             Kepler=self.kepmag, parallax=self.parallax,
                             use_emcee=True)
 
-            print("Calculating isochronal age. Running MCMC...")
             mod.fit_mcmc()
+            print("Calculating isochronal age. Running MCMC...")
             mod.save_hdf(fname)
 
         age_samples = mod.prop_samples("age")
@@ -226,6 +266,7 @@ class star(object):
 
 
 if __name__ == "__main__":
-    st = star("6196457")
+    # st = star("6196457")
     # st = star("002450729")
-    st.isochronal_age()
+    # st.isochronal_age()
+    st = star("10023062")
