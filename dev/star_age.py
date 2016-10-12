@@ -20,9 +20,10 @@ RESULTS_DIR = "results"
 class star(object):
 
     def __init__(self, id, mass=None, teff=None, logg=None, feh=None,
-                 prot=None, BV=None, Vmag=None, Gmag=None, kepmag=None,
-                 parallax=None, gyro_age=None, DATA_DIR=DATA_DIR,
-                 RESULTS_DIR=RESULTS_DIR, LC_DIR=LC_DIR, download_lc=True):
+                 prot=None, BV=None, jmag=None, hmag=None, kmag=None,
+                 Gmag=None, kepmag=None, parallax=None, gyro_age=None,
+                 DATA_DIR=DATA_DIR, RESULTS_DIR=RESULTS_DIR, LC_DIR=LC_DIR,
+                 download_lc=True):
         """
         Routines for calculating the age of a single star. Currently only
         suitable for Kepler targets.
@@ -42,8 +43,12 @@ class star(object):
             The rotation period in days.
         BV: tuple (B-V, B-V_err) (optional)
             The B-V colour.
-        Vmag: tuple (Vmag, Vmag_err) (optional)
-            The V-band magnitude. This is currently just a placeholder.
+        jmag: tuple (jmag, jmag_err) (optional)
+            The j-band magnitude.
+        hmag: tuple (hmag, hmag_err) (optional)
+            The h-band magnitude.
+        kmag: tuple (kmag, kmag_err) (optional)
+            The k-band magnitude.
         Gmag: tuple (Gmag, Gmag_err) (optional)
             The Gaia magnitude.
         kepmag: tuple (kepmag, kepmag_err) (optional)
@@ -62,11 +67,13 @@ class star(object):
             if True the Kepler light curve is downloaded and an ACF computed.
         """
 
+        assert type(id) == str, "ID must be a string"
         assert len(id) < 10, "ID must be a 9-digit KIC id."
         self.id = str(int(id)).zfill(9)  # make sure id is in KIC format.
         self.mass, self.teff, self.logg, self.feh = mass, teff, logg, feh
-        self.prot, self.BV, self.Vmag, self.Gmag = prot, BV, Vmag, Gmag
+        self.prot, self.BV, self.Gmag = prot, BV, Gmag
         self.kepmag, self.parallax, self.gyro_age = kepmag, parallax, gyro_age
+        self.jmag, self.kmag, self.hmag = jmag, kmag, hmag
 
         # KIC parameters.
         if not self.teff or not self.logg or not self.feh or not self.kepmag:
@@ -75,6 +82,7 @@ class star(object):
             m = np.array(data["kepid"]) == int(self.id)
             if len(np.array(data["kepid"][m])):  # load from kepler-TGAS cat
                 id = np.array(data["kepid"])[m]
+
                 if not self.teff:
                     self.teff = (float(np.array(data["teff"])[m]),
                                  float(.5*(np.array(data["teff_err1"])[m]) +
@@ -92,6 +100,16 @@ class star(object):
                                                     (data["logg_err2"])[m]))))
                 if not self.kepmag:
                     self.kepmag = (float(np.array(data["kepmag"])[m]), .1)
+                if not self.jmag:
+                    self.jmag = (float(np.array(data["jmag"])[m]),
+                                 float(np.array(data["jmag_err"])[m]))
+                if not self.hmag:
+                    self.hmag = (float(np.array(data["hmag"])[m]),
+                                 float(np.array(data["hmag_err"])[m]))
+                if not self.kmag:
+                    self.kmag = (float(np.array(data["kmag"])[m]),
+                                 float(np.array(data["kmag_err"])[m]))
+
             else:  # load values from the KIC using kplr
                 print("Using kplr to download stellar parameters...")
                 client = kplr.API()
@@ -104,6 +122,12 @@ class star(object):
                     self.feh = (kic_star.kic_feh, .1)
                 if not self.kepmag:
                     self.kepmag = (kic_star.kic_kepmag, .1)
+                if not self.jmag:
+                    self.jmag = (kic_star.kic_jmag, .1)
+                if not self.hmag:
+                    self.hmag = (kic_star.kic_hmag, .1)
+                if not self.kmag:
+                    self.kmag = (kic_star.kic_kmag, .1)
 
         # If the KIC values are empty, search in the astero database.
         if not self.teff[0] or not self.logg[0] or not self.feh[0]:
@@ -271,4 +295,5 @@ class star(object):
 if __name__ == "__main__":
     # st = star("6196457")
     # st = star("002450729")
-    st = star("10023062")
+    # st = star("10023062")
+    st = star("9790479")
