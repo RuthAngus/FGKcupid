@@ -103,17 +103,16 @@ def plot_2d_prediction(id, theta, x, y, z, xerr, yerr, myx, myz, mu, v, xaxis,
         xplot = np.linspace(0, max(x), 100)
         model_xplot_shape = bn_age(xplot, bv)
         l = theta[2]
-        xvar, zvar, xlabel, zlabel = "period", "B-V", \
-            "$\mathrm{Period~(Days)}$", "$B-V$"
+        xvar, xlabel, zlabel = "period", "$\mathrm{Period~(Days)}$", "$B-V$"
         m = (myz - .03 < z) * (z < myz + .03)
         plt.xlim(0, max(x[m]) + 5)
+        plt.ylim(0, 14)
     else:
         bv, period = x, myz
         xplot = np.linspace(min(x), max(x), 100)
         model_xplot_shape = bn_age(period, xplot)
         l = theta[1]
-        xvar, zvar, xlabel, zlabel = "B-V", "period", "$B-V$", \
-            "$\mathrm{Period~(Days)}$"
+        xvar, xlabel, zlabel = "B-V", "$B-V$", "$\mathrm{Period~(Days)}$"
         m = (myz - (myz * .1 - 10) < z) * (z < (myz * .1 + 10) + myz)
     yvar, ylabel = "age", "$\mathrm{Age~(Gyr)}$"
 
