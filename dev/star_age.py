@@ -153,6 +153,8 @@ class star(object):
                     self.feh = (-.2, .01)
 
         # Convert teff, logg and feh to B-V colour.
+        # FIXME: Need to convert photometry! In fact, use isochrones to find
+        # B-V (duh)
         if not self.BV:
             self.BV = (teff2bv(self.teff[0], self.logg[0], self.feh[0]), .01)
 
@@ -278,11 +280,14 @@ class star(object):
 
             # set up StarModel
             dar = Dartmouth_Isochrone()
-            mod = StarModel(dar, Teff=self.teff, logg=self.logg, feh=self.feh,
+            # mod = StarModel(dar, j=self.jmag, h=self.hmag, k=self.kmag,
+            #                 Kepler=self.kepmag, parallax=self.parallax,
+            #                 use_emcee=True)
+            mod = StarModel(dar, teff=self.teff, logg=self.logg, feh=self.feh,
                             Kepler=self.kepmag, parallax=self.parallax,
                             use_emcee=True)
 
-            mod.fit_mcmc()
+            mod.fit_mcmc(nburn=1000, niter=200)
             print("Calculating isochronal age. Running MCMC...")
             mod.save_hdf(fname)
 
